@@ -180,9 +180,9 @@ void decode()
 				fwrite(yuvData, YUV_SIZE, 1, yuv_file);
 				while(rte_ring_enqueue(ring_yuv, yuvData) != 1)
 				{
-					ring_info(ring_yuv);
 					continue;
 				}
+                ring_info(ring_yuv);
                 frame_cnt++;  
                 fclose(yuv_file);
             }  
@@ -287,6 +287,8 @@ int main(int argc, char* argv[])
 		printf("Share memory can't get pointer\n");
 		return;
 	}
+    memset(shm_yuv, 0, SHM_SIZE_YUV);
+    memset(shm_rgb, 0, SHM_SIZE_RGB);
 
 	result = GetDeckLinkIterator(&deckLinkIterator);     //get到Decklink设备
 	if (result != S_OK)
@@ -415,7 +417,7 @@ int main(int argc, char* argv[])
 	// then we can reuse without waiting on callback 
 	result = selectedDeckLinkOutput->CreateVideoFrame((int32_t)displayModes[displayModeIndex]->GetWidth(),
 													  (int32_t)displayModes[displayModeIndex]->GetHeight(),
-													  (int32_t)displayModes[displayModeIndex]->GetWidth() * 4,
+													  (int32_t)displayModes[displayModeIndex]->GetWidth() * 2,
 													  ImageLoader::kImageLoaderPixelFormat,    //ARGB
 													  bmdFrameFlagDefault,
 													  &playbackFrame);
