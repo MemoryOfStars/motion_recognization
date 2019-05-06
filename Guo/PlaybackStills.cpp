@@ -35,7 +35,7 @@
 #define SHM_SIZE_YUV YUV_SIZE*SHM_LEN + 32
 #define SHM_SIZE_RGB RGB_SIZE*SHM_LEN + 32
 
-#define OUTPUT_FORMAT AV_PIX_FMT_420P 
+#define OUTPUT_FORMAT AV_PIX_FMT_YUV420P 
 #define SAVE_FILE    true
 
 #include <stdio.h>
@@ -43,6 +43,8 @@
 #include <chrono>
 #include <mutex>
 #include <condition_variable>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include "platform.h"
 #include "ImageLoader.h"
 #include "DeckLinkAPI.h"
@@ -165,7 +167,7 @@ void decode()
             if (got_picture)  
             {  
                 char filename[100];
-                sprintf(filename, "./YUV/%d.yuv", nframe);
+                sprintf(filename, "./YUV/%d.yuv", frame_cnt);
                 yuv_file = fopen(filename, "wb");
                 sws_scale(img_convert_ctx, (const unsigned char* const*)pFrame->data, pFrame->linesize, 0, pCodecCtx->height,  
                     pFrameYUV->data, pFrameYUV->linesize);  
@@ -180,6 +182,7 @@ void decode()
 				{
 					continue;
 				}
+                ring_info(ring_yuv);
                 frame_cnt++;  
                 fclose(yuv_file);
             }  
@@ -211,28 +214,30 @@ void PlaybackStills(IDeckLinkOutput* deckLinkOutput, IDeckLinkVideoFrame* playba
 		fprintf(stderr, "Error reading PNG file: %s\n");
 		playbackRunning = false;
 	}
-	
-	while(rte_ring_dequeue(ring_rgb, &rgbData) != 1)
+	while(1)
 	{
-		continue;
-	}
-	memset(deckLinkBuffer, 0, VIDEO_WIDTH*VIDEO_HEIGHT*4);
-	memcpy(deckLinkBuffer, rgbData, VIDEO_WIDTH*VIDEO_HEIGHT*4);
-	//if(SAVE_FILE)
-	//{
-	//    fwrite(yuvData, VIDEO_WIDTH*VIDEO_HEIGHT*2, 1, yuv_file);
-	//}
-	
-	result = deckLinkOutput->DisplayVideoFrameSync(playbackFrame);              //播放playbackFrame这一帧
-	if (result != S_OK)
-	{
-		fprintf(stderr, "Unable to display video output\n");
-		playbackRunning = false;
-	}
-	else
-	{
-		printf("display success :%d\n", frame_cnt);
-		frame_cnt++;
+		while(rte_ring_dequeue(ring_rgb, &rgbData) != 1)
+		{
+			continue;
+		}
+		memset(deckLinkBuffer, 0, VIDEO_WIDTH*VIDEO_HEIGHT*4);
+		memcpy(deckLinkBuffer, rgbData, VIDEO_WIDTH*VIDEO_HEIGHT*4);
+		//if(SAVE_FILE)
+		//{
+		//    fwrite(yuvData, VIDEO_WIDTH*VIDEO_HEIGHT*2, 1, yuv_file);
+		//}
+		
+		result = deckLinkOutput->DisplayVideoFrameSync(playbackFrame);              //播放playbackFrame这一帧
+		if (result != S_OK)
+		{
+			fprintf(stderr, "Unable to display video output\n");
+			playbackRunning = false;
+		}
+		else
+		{
+			printf("display success :%d\n", frame_cnt);
+			frame_cnt++;
+		}
 	}
 		
 }
@@ -284,6 +289,8 @@ int main(int argc, char* argv[])
 		printf("Share memory can't get pointer\n");
 		return;
 	}
+    memset(shm_yuv, 0, SHM_SIZE_YUV);
+    memset(shm_rgb, 0, SHM_SIZE_RGB);
 
 	result = GetDeckLinkIterator(&deckLinkIterator);     //get到Decklink设备
 	if (result != S_OK)
@@ -412,7 +419,7 @@ int main(int argc, char* argv[])
 	// then we can reuse without waiting on callback 
 	result = selectedDeckLinkOutput->CreateVideoFrame((int32_t)displayModes[displayModeIndex]->GetWidth(),
 													  (int32_t)displayModes[displayModeIndex]->GetHeight(),
-													  (int32_t)displayModes[displayModeIndex]->GetWidth() * 2,
+													  (int32_t)displayModes[displayModeIndex]->GetWidth() * 4,
 													  ImageLoader::kImageLoaderPixelFormat,    //ARGB
 													  bmdFrameFlagDefault,
 													  &playbackFrame);

@@ -322,12 +322,12 @@ extern "C" {
 	// 	return;
 	// }
 
-	// void ring_info(struct rte_ring *r)
-	// {
-	// 	printf("ring size:%d\n", r->size);
-	// 	printf("ring usage:%d\n", (*r->prod_head - *r->cons_head + r->size) % r->size);
-	// 	printf("prod_head:%d, prod_tail:%d, cons_head:%d, cons_tail:%d\n", *r->prod_head, *r->prod_tail, *r->cons_head, *r->cons_tail);
-	// }
+	static __rte_always_inline void ring_info(struct rte_ring *r)
+	{
+		printf("ring size:%d\n", r->size);
+		printf("ring usage:%d\n", (*r->head - *r->tail + r->size) % r->size);
+		printf("head:%d, tail:%d\n", *r->head,  *r->tail);
+	}
 
 #ifdef __cplusplus
 }

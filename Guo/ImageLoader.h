@@ -34,7 +34,7 @@
 
 namespace ImageLoader
 {
-	const BMDPixelFormat kImageLoaderPixelFormat = bmdFormat8BitYUV;                        //YUV422
+	const BMDPixelFormat kImageLoaderPixelFormat = bmdFormat8BitARGB;            //YUV422
 
 	HRESULT GetPNGFilesFromDir(const std::string& path, std::vector<std::string>& fileList);//将一个目录下的所有png文件读到filelist中
 	HRESULT ConvertPNGToDeckLinkVideoFrame(const std::string& pngFilename, IDeckLinkVideoFrame* deckLinkVideoFrame);
