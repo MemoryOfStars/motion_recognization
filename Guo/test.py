@@ -1,15 +1,22 @@
 import cv2
+<<<<<<< HEAD
 import os
+=======
+import pyopenpose as op
+>>>>>>> f14b84fa8e8a16865ef38a95fb4317b063f285f9
 import _thread
 from ctypes import *
 import numpy as np
 import struct
+<<<<<<< HEAD
 import sys
 from sys import platform
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('../../../python');
 from openpose import pyopenpose as op
+=======
+>>>>>>> f14b84fa8e8a16865ef38a95fb4317b063f285f9
 
 
 YUV_SIZE     = int(1920*1080*3/2)
@@ -75,7 +82,11 @@ def dequeue():
 
 def analyze():
     params = dict()
+<<<<<<< HEAD
     params["model_folder"] = "../../../../models/"
+=======
+    params["model_folder"] = "../../../models/"
+>>>>>>> f14b84fa8e8a16865ef38a95fb4317b063f285f9
 
 
     opWrapper = op.WrapperPython()
@@ -92,6 +103,7 @@ def analyze():
         print(str(yuv_img.shape))
         
         imageToProcess = cv2.cvtColor(yuv_img, cv2.COLOR_YUV2RGB_I420)
+<<<<<<< HEAD
         print('cvt to rgb end')
         datum.cvInputData = imageToProcess
         print('start analyze')
@@ -101,6 +113,14 @@ def analyze():
         print('cvt to rgba end')
         rgba_bin = rgba_data.reshape(1920*1080*4).ctypes.data
         print('start enqueue')
+=======
+        
+        datum.cvInputData = imageToProcess
+        opWrapper.emplaceAndPop([datum])
+        
+        rgba_data = cv2.cvtColor(datum.cvOutputData, cv2.COLOR_RGB2RGBA)
+        rgba_bin = rgba_data.reshape(1920*1080*4).ctypes.data
+>>>>>>> f14b84fa8e8a16865ef38a95fb4317b063f285f9
         while enqueue(rgba_bin) == -1:
             pass
 
