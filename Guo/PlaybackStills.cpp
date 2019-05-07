@@ -202,6 +202,8 @@ void PlaybackStills(IDeckLinkOutput* deckLinkOutput, IDeckLinkVideoFrame* playba
 
 	uint8_t*	                deckLinkBuffer	    = nullptr;                             //数据地址
 	int                         frame_cnt           = 1;
+    FILE* rgb_file                                   = NULL;
+    char                        file_path[100];
 	
 	void*                       rgbData             = malloc(4*VIDEO_WIDTH*VIDEO_HEIGHT);
     
@@ -222,12 +224,7 @@ void PlaybackStills(IDeckLinkOutput* deckLinkOutput, IDeckLinkVideoFrame* playba
 		}
 		memset(deckLinkBuffer, 0, VIDEO_WIDTH*VIDEO_HEIGHT*4);
 		memcpy(deckLinkBuffer, rgbData, VIDEO_WIDTH*VIDEO_HEIGHT*4);
-		//if(SAVE_FILE)
-		//{
-		//    fwrite(yuvData, VIDEO_WIDTH*VIDEO_HEIGHT*2, 1, yuv_file);
-		//}
-		
-		result = deckLinkOutput->DisplayVideoFrameSync(playbackFrame);              //播放playbackFrame这一帧
+        result = deckLinkOutput->DisplayVideoFrameSync(playbackFrame);              //播放playbackFrame这一帧
 		if (result != S_OK)
 		{
 			fprintf(stderr, "Unable to display video output\n");
@@ -235,7 +232,15 @@ void PlaybackStills(IDeckLinkOutput* deckLinkOutput, IDeckLinkVideoFrame* playba
 		}
 		else
 		{
-			printf("display success :%d\n", frame_cnt);
+			sprintf(file_path, "./RGB/%d.rgb", frame_cnt);
+            rgb_file = fopen(file_path, "wb");
+		    if(SAVE_FILE)
+		    {
+		        fwrite(rgbData, VIDEO_WIDTH*VIDEO_HEIGHT*4, 1, rgb_file);
+		    }
+            fclose(rgb_file);
+		
+            printf("display success :%d\n", frame_cnt);
 			frame_cnt++;
 		}
 	}
